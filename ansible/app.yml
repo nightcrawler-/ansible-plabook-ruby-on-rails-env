@@ -52,11 +52,11 @@
         id: 561F9B9CAC40B2F7
         state: present
 
-    - name: Install Passenger Phusion repository
-      apt_repository: 
-        repo: "deb https://oss-binaries.phusionpassenger.com/apt/passenger {{ ansible_distribution_release }} main"
+    - name: Add Phusion apt repo.
+      apt_repository:
+        repo: 'deb https://oss-binaries.phusionpassenger.com/apt/passenger {{ ansible_distribution_release }} main'
         state: present
-        update_cache: yes
+        update_cache: true
 
  #### Install Ruby Dependencies
 
@@ -100,6 +100,10 @@
         src: /usr/share/nginx/modules-available/mod-http-passenger.load
         dest: /etc/nginx/modules-enabled/50-mod-http-passenger.conf
         state: link
+
+# Copy nginx configuration to the server
+
+# 
 
 # This block runs as the deploy user
 
