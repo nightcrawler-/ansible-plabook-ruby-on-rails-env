@@ -103,7 +103,9 @@
 
 # Copy nginx configuration to the server
 
-# 
+# Install postgresql
+
+# Setup postgresql production db - username and pwd
 
 # This block runs as the deploy user
 
