@@ -15,90 +15,122 @@
         user: deploy
         key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuxMbjZLEk0AqHkl8gukJHWNEIB8UP3HRzmE6UoYP6KxtbDaekDTZ10COHzzO0Vo3C9If9v9UmOkggBOWmF8GTurcFR/p70POeuyw9dmpcCm72dTCadOJCHB2m/vPTyhA14P7nXruLk9nQSIsIoaRQlG5/p/6kMY3jUHIhOVLiJUOzE2vpl8XGYZzzewqZpF/9jRl1nTRoL0XFtoCoUVjAY6jMt5wHp7Gl8/1tEFkiab9JvX0oj5zAOSxWpqLI+32U2wnwvbEniHNt2ZC+PPykA3P744RMQmrSADpVk2f2J5kwUt2W1xZOpUbGE9FMyOaD5i1Tq1rSmBTZa9RR1Ekd frederick@frederick-hp"
  
+     #### Adding missing repositories for required packages that are ruby dependecies -- nodejs, yarn and redis
+
+    - name: Install the gpg key for nodejs LTS
+      apt_key:
+        url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+        state: present
+
+    - name: Install the nodejs LTS repos
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_12.x {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: yes
+
+    - name: Install the gpg key for yarn
+      apt_key:
+        url: "https://dl.yarnpkg.com/debian/pubkey.gpg"
+        state: present
+
+    - name: Install the yarn repos
+      apt_repository:
+        repo: "deb https://dl.yarnpkg.com/debian/ stable main"
+        state: present
+        update_cache: yes
+
+    - name: Install the redis-server repos
+      apt_repository:
+        repo: ppa:chris-lea/redis-server
+        state: present
+        update_cache: yes
+
+    # Passenger repository setup.
+    - name: Add Passenger apt key.
+      apt_key:
+        keyserver: keyserver.ubuntu.com
+        id: 561F9B9CAC40B2F7
+        state: present
+
+    - name: Install Passenger Phusion repository
+      apt_repository: 
+        repo: "deb https://oss-binaries.phusionpassenger.com/apt/passenger {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: yes
+
+ #### Install Ruby Dependencies
+
+    - name: Install Ruby Dependencies
+      apt:
+        name: "{{ item }}"
+      with_items:
+        - git-core
+        - curl
+        - zlib1g-dev
+        - build-essential
+        - libssl-dev
+        - libreadline-dev
+        - libyaml-dev
+        - libsqlite3-dev
+        - sqlite3
+        - libxml2-dev
+        - libxslt1-dev
+        - libcurl4-openssl-dev
+        - software-properties-common
+        - libffi-dev
+        - dirmngr
+        - gnupg
+        - apt-transport-https
+        - ca-certificates
+        - redis-server
+        - redis-tools
+        - nodejs
+        - yarn
+        - rbenv
+
+    - name: Install Nginx and Passenger.
+      apt:
+        name:
+          - nginx
+          - libnginx-mod-http-passenger
+        state: present
+
+    - name: Ensure passenger module is enabled.
+      file:  # noqa 208
+        src: /usr/share/nginx/modules-available/mod-http-passenger.load
+        dest: /etc/nginx/modules-enabled/50-mod-http-passenger.conf
+        state: link
+
 # This block runs as the deploy user
+
     - block: 
-
-      #### Adding missing repositories for required packages that are ruby dependecies -- nodejs, yarn and redis
-
-      - name: Install the gpg key for nodejs LTS
-        apt_key:
-          url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
-          state: present
-      - name: Install the nodejs LTS repos
-        apt_repository:
-          repo: "deb https://deb.nodesource.com/node_12.x {{ ansible_distribution_release }} main"
-          state: present
-          update_cache: yes
-      - name: Install the gpg key for yarn
-        apt_key:
-          url: "https://dl.yarnpkg.com/debian/pubkey.gpg"
-          state: present
-      - name: Install the yarn repos
-        apt_repository:
-          repo: "deb https://dl.yarnpkg.com/debian/ stable main"
-          state: present
-          update_cache: yes
-      - name: Install the redis-server repos
-        apt_repository:
-          repo: ppa:chris-lea/redis-server
-          state: present
-          update_cache: yes
-
-  #### Install Ruby Dependencies
-
-      - name: Install Ruby Dependencies
-        apt:
-          name: "{{ item }}"
-        with_items:
-          - git-core
-          - curl
-          - zlib1g-dev
-          - build-essential
-          - libssl-dev
-          - libreadline-dev
-          - libyaml-dev
-          - libsqlite3-dev
-          - sqlite3
-          - libxml2-dev
-          - libxslt1-dev
-          - libcurl4-openssl-dev
-          - software-properties-common
-          - libffi-dev
-          - dirmngr
-          - gnupg
-          - apt-transport-https
-          - ca-certificates
-          - redis-server
-          - redis-tools
-          - nodejs
-          - yarn
 
   #### Install rbenv then use it to install ruby. rbenv is cloned locally first, added to the path, etc
 
-      - name: Clone rbenv
-        git:
-          repo: https://github.com/rbenv/rbenv.git
-          dest: ~/.rbenv
-      - name: Add .rbenv to the PATH
-        shell: |
-          echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
-      - name: Add .rbenvinit to .bashrc
-        shell: |
-          echo 'eval "$(rbenv init -)"' >> ~/.bashrc
-      - name: Clone ruby-build
-        git:
-          repo: https://github.com/rbenv/ruby-build.git
-          dest: ~/.rbenv/plugins/ruby-build
-      - name: Add ruby build to the PATH
-        shell: |
-          echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
-      - name: Clone rbenv-vars
-        git: 
-          repo: https://github.com/rbenv/rbenv-vars.git
-          dest: ~/.rbenv/plugins/rbenv-vars
-      - name: Commit PATH variables to shell
-        shell: |
-          exec $SHELL
+      # - name: Clone rbenv
+      #   git:
+      #     repo: https://github.com/rbenv/rbenv.git
+      #     dest: ~/.rbenv
+      # - name: Add .rbenv to the PATH
+      #   shell: |
+      #     echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+      # - name: Add .rbenv init to .bashrc
+      #   shell: |
+      #     echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+      # - name: Clone ruby-build
+      #   git:
+      #     repo: https://github.com/rbenv/ruby-build.git
+      #     dest: ~/.rbenv/plugins/ruby-build
+      # - name: Add ruby build to the PATH
+      #   shell: |
+      #     echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
+      # - name: Clone rbenv-vars
+      #   git: 
+      #     repo: https://github.com/rbenv/rbenv-vars.git
+      #     dest: ~/.rbenv/plugins/rbenv-vars
+      # - name: Commit PATH variables to shell
+      #   shell: |
+      #     exec $SHELL
       - name: Install Ruby 2.7.0
         shell: |
           rbenv install 2.7.0
@@ -109,6 +141,8 @@
         shell: |
           ruby -v
       - name: Install Bundler
+        become: yes
+        become_user: root
         shell: |
           gem install bundler 
       - name: Check Bundler version

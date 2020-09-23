@@ -27,6 +27,18 @@ pwd
         state: present
         update_cache: yes
 
+    - name: Install Passenger Phusion gpg key
+    	apt_key: 
+    		url: "hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7"
+    		state: present
+    		update_cache: yes
+
+    - name: Install Passenger Phusion repository
+    	apt_repository: 
+    		url: "deb https://oss-binaries.phusionpassenger.com/apt/passenger bionic main"
+    		state: present
+    		update_cache: yes
+
 
     - name: Clone rbenv
       git:

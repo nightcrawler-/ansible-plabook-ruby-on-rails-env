@@ -1,1 +1,1 @@
-rails ansible_host=test.cafrecode.co.ke ansible_user=ubuntu
+rails ansible_host=test2.cafrecode.co.ke ansible_user=ubuntu
