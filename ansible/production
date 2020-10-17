@@ -1,0 +1,1 @@
+rails ansible_host=dev.cafrecode.co.ke ansible_user=frederick

@@ -1,0 +1,118 @@
+---
+- hosts: rails
+  remote_user: root
+  become: yes
+  tasks:
+    - name: Update all packages to the latest version
+      apt:
+        upgrade: dist
+    - name: Add deploy user
+      user:
+        name: deploy
+        shell: /bin/bash
+    - name: Add SSH key to server for deploy user
+      authorized_key:
+        user: deploy
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuxMbjZLEk0AqHkl8gukJHWNEIB8UP3HRzmE6UoYP6KxtbDaekDTZ10COHzzO0Vo3C9If9v9UmOkggBOWmF8GTurcFR/p70POeuyw9dmpcCm72dTCadOJCHB2m/vPTyhA14P7nXruLk9nQSIsIoaRQlG5/p/6kMY3jUHIhOVLiJUOzE2vpl8XGYZzzewqZpF/9jRl1nTRoL0XFtoCoUVjAY6jMt5wHp7Gl8/1tEFkiab9JvX0oj5zAOSxWpqLI+32U2wnwvbEniHNt2ZC+PPykA3P744RMQmrSADpVk2f2J5kwUt2W1xZOpUbGE9FMyOaD5i1Tq1rSmBTZa9RR1Ekd frederick@frederick-hp"
+    - name: Install Ruby dependencies
+      apt:
+        name: "{{ item }}"
+      with_items:
+        - gcc
+        - autoconf
+        - bison
+        - build-essential
+        - libssl1.0-dev
+        - libyaml-dev
+        - libreadline6-dev
+        - zlib1g-dev
+        - libncurses5-dev
+        - libffi-dev
+        - libgdbm5
+        - libgdbm-dev
+        - sqlite3
+        - libsqlite3-dev
+        - nodejs
+    - name: Download ruby-install
+      become: no
+      get_url:
+        url: https://github.com/postmodern/ruby-install/archive/v0.6.1.tar.gz
+        dest: /home/frederick/ruby-install-0.6.1.tar.gz
+    - name: Extract ruby-install tarball
+      become: no
+      unarchive:
+        src: /home/frederick/ruby-install-0.6.1.tar.gz
+        dest: /home/frederick
+        creates: /home/frederick/ruby-install-0.6.1
+        remote_src: yes
+    - name: Install ruby-install
+      make:
+        chdir: /home/frederick/ruby-install-0.6.1
+        target: install
+    - name: Install Ruby
+      become_user: deploy
+      command: /usr/local/bin/ruby-install --no-install-deps ruby 2.5.0
+      args:
+        creates: /home/deploy/.rubies/ruby-2.5.0
+    - name: Download chruby
+      become: no
+      get_url:
+        url: https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz
+        dest: /home/frederick/chruby-0.3.9.tar.gz
+    - name: Extract chruby tarball
+      become: no
+      unarchive:
+        src: /home/frederick/chruby-0.3.9.tar.gz
+        dest: /home/frederick
+        creates: /home/frederick/chruby-0.3.9
+        remote_src: yes
+    - name: Install chruby
+      make:
+        chdir: /home/frederick/chruby-0.3.9
+        target: install
+    - name: Load chruby for deploy user
+      lineinfile:
+        path: /home/deploy/.bashrc
+        regexp: 'chruby.sh$'
+        line: 'source /usr/local/share/chruby/chruby.sh'
+        insertbefore: BOF
+    - name: Set ruby version for deploy user
+      lineinfile:
+        path: /home/deploy/.profile
+        regexp: '^chruby'
+        line: 'chruby ruby-2.5.0'
+    - name: Install bundler
+      become_user: deploy
+      command: 'chruby-exec ruby-2.5.0 -- gem install bundler'
+      args:
+        creates: /home/deploy/.gem/ruby/2.5.0/bin/bundle
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: latest
+    - name: Upload nginx config
+      copy:
+        src: nginx_config
+        dest: /etc/nginx/sites-available/rails
+      notify:
+        - Restart nginx
+    - name: Disable default nginx config
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify:
+        - Restart nginx
+    - name: Enable nginx config
+      file:
+        src: /etc/nginx/sites-available/rails
+        dest: /etc/nginx/sites-enabled/rails
+        state: link
+      notify:
+        - Restart nginx
+    - name: Add Semaphore SSH key to server for deploy user
+      authorized_key:
+        user: deploy
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuxMbjZLEk0AqHkl8gukJHWNEIB8UP3HRzmE6UoYP6KxtbDaekDTZ10COHzzO0Vo3C9If9v9UmOkggBOWmF8GTurcFR/p70POeuyw9dmpcCm72dTCadOJCHB2m/vPTyhA14P7nXruLk9nQSIsIoaRQlG5/p/6kMY3jUHIhOVLiJUOzE2vpl8XGYZzzewqZpF/9jRl1nTRoL0XFtoCoUVjAY6jMt5wHp7Gl8/1tEFkiab9JvX0oj5zAOSxWpqLI+32U2wnwvbEniHNt2ZC+PPykA3P744RMQmrSADpVk2f2J5kwUt2W1xZOpUbGE9FMyOaD5i1Tq1rSmBTZa9RR1Ekd frederick@frederick-hp"
+  handlers:
+    - name: Restart nginx
+      service: name=nginx state=restarted
