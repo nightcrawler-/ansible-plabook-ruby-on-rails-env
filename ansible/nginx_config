@@ -19,7 +19,7 @@ server {
 
   listen 80;
   server_name portfolio.cafrecode.co.ke;
-  root /home/frederick/sites/cafrecode;
+  root /home/frederick/sites/cafrecode/current;
   index index.html;
 
 }
