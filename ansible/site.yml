@@ -113,6 +113,9 @@
       authorized_key:
         user: deploy
         key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuxMbjZLEk0AqHkl8gukJHWNEIB8UP3HRzmE6UoYP6KxtbDaekDTZ10COHzzO0Vo3C9If9v9UmOkggBOWmF8GTurcFR/p70POeuyw9dmpcCm72dTCadOJCHB2m/vPTyhA14P7nXruLk9nQSIsIoaRQlG5/p/6kMY3jUHIhOVLiJUOzE2vpl8XGYZzzewqZpF/9jRl1nTRoL0XFtoCoUVjAY6jMt5wHp7Gl8/1tEFkiab9JvX0oj5zAOSxWpqLI+32U2wnwvbEniHNt2ZC+PPykA3P744RMQmrSADpVk2f2J5kwUt2W1xZOpUbGE9FMyOaD5i1Tq1rSmBTZa9RR1Ekd frederick@frederick-hp"
+    - name: Install Certbot - To install letsencrypt certificates
+      shell: |
+        sudo snap install core; sudo snap refresh core
   handlers:
     - name: Restart nginx
       service: name=nginx state=restarted
