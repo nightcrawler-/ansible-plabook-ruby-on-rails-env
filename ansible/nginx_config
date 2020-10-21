@@ -16,7 +16,7 @@
 # Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
 
 upstream app {
-  server unix:///home/deploy/apps/shared/tmp/sockets/puma.sock fail_timeout=0;
+  server unix:///home/frederick/apps/calistro/shared/tmp/sockets/puma.sock fail_timeout=0;
 }
 
 server {
