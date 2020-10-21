@@ -121,7 +121,7 @@
     - name: Configure certificates for domain (pass as param here, later)
       become: yes
       shell: |
-        certbot --nginx -n -m frederick@cafrecode.co.ke --agree-tos
+        certbot --nginx -n -m frederick@cafrecode.co.ke --agree-tos -d portfolio.cafrecode.co.ke -d staging.calisto.cafrecode.co.ke
   handlers:
     - name: Restart nginx
       service: name=nginx state=restarted
