@@ -34,6 +34,8 @@
         - libsqlite3-dev
         - nodejs
         - imagemagick
+        - postgresql
+        - postgresql-contrib
         - libpq-dev
         - redis-server
     - name: Download ruby-install
